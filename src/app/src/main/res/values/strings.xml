@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name" translatable="false">Leancher</string>
+
+    <string name="page_home" translatable="false">Home</string>
+    <string name="page_notification_center">Notification Center</string>
+    <string name="page_widget_feed" translatable="false">Widget Feed</string>
+
+    <!-- service names -->
+    <string name="notification_service_name" translatable="false">NotificationService</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
+    <string name="hows_your_day">How\'s your day?</string>
+    <string name="launcher_experience" translatable="false">A human centered launcher</string>
+    <string name="manage_notifications_here">Manage your notifications here</string>
+    <string name="clear_all">Clear All</string>
+    <string name="hide_notifications">Hide Notifications</string>
+    <string name="no_notifications">No active notifications!</string>
+    <string name="all_notifications">All Notifications</string>
+    <string name="remove_widget_title">Remove Widget?</string>
+    <string name="remove_widget_text">Are you sure?  Widget will be removed ...</string>
+</resources>

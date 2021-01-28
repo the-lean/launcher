@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_notification_center">Nachrichten Center</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nein</string>
+    <string name="add">Hinzufügen</string>
+    <string name="remove">Entfernen</string>
+    <string name="hows_your_day">Wie ist dein Tag?</string>
+    <string name="manage_notifications_here">Verwalte deine Nachrichten</string>
+    <string name="clear_all">Alle löschen</string>
+    <string name="hide_notifications">Nachrichten verbergen</string>
+    <string name="no_notifications">Keine aktiven Nachrichten!</string>
+    <string name="all_notifications">Alle Nachrichten</string>
+    <string name="remove_widget_title">Widget entfernen?</string>
+    <string name="remove_widget_text">Bist du sicher? Widget wird entfernt ...</string>
+</resources>

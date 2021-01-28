@@ -1,0 +1,30 @@
+# "I wanna ..."
+- Call \<Somebody\>
+- Open/Start an <App>
+- Send a \<Message\>? to \<Somebody\>
+- Send \<Pictures\> to \<Somebody\>
+- Use the Flash
+- Show/Share some Pictures to/with Somebody
+- Take a look at my Repositories
+- Check my Mails
+- Plan my week/day
+- Create an \<Appointment\>
+- Write a \<Mail\>
+- Create a \<Todo-Item/Task\>
+- shop
+- watch a \<Video\>
+- check the wheather
+- create a Contact
+- Tune my guitar
+- Set a Timer
+- Set an Alarm
+- Identify a Song
+- Take a Picture
+- Take a Video
+- Take a Note
+- // Smarthome Stuff
+- waste my time...
+- edit a \<Photo\>
+- tweet something
+- Play a \<Song\> | Play \<Music\> (https://community.spotify.com/t5/Android/How-to-launch-an-Android-Intent-to-search-for-and-play-a-song-on/td-p/4898125)
+- Check whether \<Somebody\> texted me

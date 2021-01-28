@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="yes">Yes</string>
+    <string name="page_notification_center">Notification Center</string>
+    <string name="no">No</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
+    <string name="hows_your_day">How\'s your day?</string>
+    <string name="manage_notifications_here">Manage your notifications here</string>
+    <string name="clear_all">Clear All</string>
+    <string name="hide_notifications">Hide Notifications</string>
+    <string name="no_notifications">No active notifications!</string>
+    <string name="all_notifications">All Notifications</string>
+    <string name="remove_widget_title">Remove Widget?</string>
+    <string name="remove_widget_text">Are you sure?  Widget will be removed ...</string>
+</resources>

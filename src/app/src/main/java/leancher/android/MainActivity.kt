@@ -15,9 +15,11 @@ import android.provider.Settings
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
@@ -84,14 +86,12 @@ class MainActivity : AppCompatActivity() {
                 }
             )
         }
-
-        throw Exception("typically, a nice video is better than a crappy demo")
     }
 
     private val homeModel = HomeModel(ScopedStateStore("home"))
 
-    private val feedVM by viewModels<FeedViewModel>() {
-        ViewModelFactory(FeedViewModel::class.java) {
+    private val feedVM by viewModels<FeedViewModel> {
+        ViewModelFactory {
             FeedViewModel(
                 widgets = mutableListOf(),
                 FeedViewModel.Actions(
@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private val homeVM by viewModels<HomeViewModel> {
-        ViewModelFactory(HomeViewModel::class.java) {
+        ViewModelFactory {
             HomeViewModel(
                 model = homeModel,
                 inputRenderers = mapOf(
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private val notificationsVM by viewModels<NotificationCenterViewModel> {
-        ViewModelFactory(NotificationCenterViewModel::class.java) {
+        ViewModelFactory {
             NotificationCenterViewModel(
                 NotificationCenterViewModel.Actions(
                     clearNotifications = ::clearNotifications,
@@ -179,7 +179,12 @@ class MainActivity : AppCompatActivity() {
     @Composable
     fun ApplicationList(setResult: (Any) -> Unit) {
         for (info in getApplicationsList()) {
-            Text(text = info.label as String, style = MaterialTheme.typography.body1)
+            val intent = packageManager.getLaunchIntentForPackage(info.applicationInfo.packageName)!!
+            Text(
+                modifier = Modifier.clickable(onClick = { setResult(intent) }),
+                text = info.label as String,
+                style = MaterialTheme.typography.body1
+            )
         }
     }
 

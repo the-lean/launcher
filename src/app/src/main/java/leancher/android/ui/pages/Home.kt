@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import leancher.android.R
 import leancher.android.domain.models.PageTitle
-import leancher.android.ui.components.TitleCard
 import leancher.android.domain.intents.LeancherIntent
 import leancher.android.viewmodels.HomeViewModel
-import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.compose.ui.platform.AmbientContext
 
 @Composable
@@ -26,22 +23,20 @@ fun Home(vm: HomeViewModel) {
         R.drawable.leancher
     )
 
-    // TODO
-    var textValue by savedInstanceState { "1234567812345678" }
+//    // TODO
+//    var textValue by savedInstanceState { "1234567812345678" }
 
-    Row {
-        Column(Modifier.padding(10.dp)) {
-            TitleCard(pageTitle = homeTitleModel, null)
-        }
-    }
+//    Row {
+//        Column(Modifier.padding(10.dp)) {
+//            TitleCard(pageTitle = homeTitleModel, null)
+//        }
+//    }
 
     Column(Modifier.padding(10.dp)) {
-//        Text(text = vm.greeting)
-//        Text(text = "Step Index: ${vm.stepIndex}")
-        IWanna()
-        ScrollableColumn() {
+        IWanna(vm::onStartOver)
+        ScrollableColumn {
             Blocks(vm.blocks, vm.renderers)
-            NextBlock(vm.nextBlockOptions, vm::blockSelected, vm.renderers)
+            NextBlock(vm.nextBlockOptions, vm::blockSelected)
             if(vm.isFinished) Button(onClick = vm::onStartOver) {
                 Text(text = "Start Over")
             }
@@ -51,7 +46,12 @@ fun Home(vm: HomeViewModel) {
 
 
 @Composable
-fun IWanna() = Text("i wanna …", style = MaterialTheme.typography.subtitle1)
+fun IWanna(startOver: () -> Unit) =
+    Text(
+        modifier = Modifier.clickable { startOver() },
+        text = "i wanna …",
+        style = MaterialTheme.typography.subtitle1
+    )
 
 @Composable
 fun Blocks(blocks: List<LeancherIntent.Block>, renderers: HomeViewModel.Renderers) =
@@ -60,8 +60,7 @@ fun Blocks(blocks: List<LeancherIntent.Block>, renderers: HomeViewModel.Renderer
 @Composable
 fun NextBlock(
     nextBlockOptions: List<LeancherIntent.Block>,
-    blockSelected: (LeancherIntent.Block) -> Unit,
-    renderers: HomeViewModel.Renderers
+    blockSelected: (LeancherIntent.Block) -> Unit
 ) {
 //    val textState = remember { mutableStateOf(TextFieldValue()) }
 //    TextField(
@@ -69,8 +68,11 @@ fun NextBlock(
 //        onValueChange = { textState.value = it }
 //    )
 //    Text("Searching for: " + textState.value.text)
-    nextBlockOptions.forEach { block ->
-        Card(Modifier.clickable(onClick = { blockSelected(block) }).padding(vertical = 5.dp)) { Block(block, renderers) }
+
+    val filter = ""
+    Column {
+        Text(text = "Filter: \"$filter\"")
+        nextBlockOptions.forEach { block -> NextBlockOption(filter, block, blockSelected) }
     }
 }
 
@@ -78,8 +80,21 @@ fun NextBlock(
 fun Block(block: LeancherIntent.Block, renderers: HomeViewModel.Renderers) = when(block) {
     is LeancherIntent.Block.Text -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
     is LeancherIntent.Block.Action.Getter.InputGetter -> (renderers.input[block.renderer.id]?.invoke(block.reference) ?: { Text("no renderer for ${block.renderer} specified") }).invoke()
-    is LeancherIntent.Block.Action.Getter.IntentGetter -> TODO("render result")
-    is LeancherIntent.Block.Action.Setter.ReferenceSetter -> { }
-    is LeancherIntent.Block.Action.Setter.IntentDefinitionSetter -> { }
-    is LeancherIntent.Block.Message -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
+    is LeancherIntent.Block.Action.Getter.IntentGetter -> (renderers.output[block.renderer.id] ?: {Text("no renderer for ${block.renderer} specified")}).invoke()
+    is LeancherIntent.Block.Message -> Snackbar(text = { Text(text = block.content) })
+    else -> { }
+}
+
+@Composable
+fun NextBlockOption(
+    filter: String,
+    block: LeancherIntent.Block,
+    blockSelected: (LeancherIntent.Block) -> Unit
+) = when(block) {
+    is LeancherIntent.Block.Text -> Text(
+        modifier = Modifier.clickable { blockSelected(block) },
+        text = block.content,
+        style = MaterialTheme.typography.subtitle1
+    )
+    else -> { }
 }

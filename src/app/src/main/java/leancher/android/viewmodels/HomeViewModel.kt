@@ -32,15 +32,8 @@ interface IScopedStateStore {
     fun <TState>loadState (key: String): TState?
 }
 
-class ViewModelFactory<TViewModel : ViewModel?>(
-    private val viewModelClass: Class<TViewModel>,
-    private val getViewModel: () -> TViewModel) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return when {
-            modelClass.isAssignableFrom(viewModelClass) -> getViewModel() as T
-            else -> throw IllegalArgumentException("Unknown ViewModel class")
-        }
-    }
+class ViewModelFactory<TViewModel : ViewModel?>(private val getViewModel: () -> TViewModel) : ViewModelProvider.Factory {
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T = getViewModel() as T
 }
 
 typealias InputRenderer = @Composable (setResult: (Any) -> Unit) -> Unit
@@ -67,35 +60,67 @@ class HomeViewModel(
     var isFinished: Boolean by mutableStateOf(false)
         private set
 
-    class Renderers(val input: Map<String, (Reference) -> (@Composable () -> Unit)>, val output: Map<String, @Composable () -> Unit>)
+    class Renderers(
+        val input: Map<String, (Reference) -> (@Composable () -> Unit)>,
+        val output: Map<String, @Composable () -> Unit>
+    )
     val renderers = Renderers (
-        inputRenderers.mapValues { (_, renderFunction) -> { reference -> { renderFunction { value -> values[reference.key] = value } } } },
+        inputRenderers.mapValues { (_, renderFunction) -> { reference -> { renderFunction { value -> setInputResult(reference, value) } } } },
         outputRenderers
     )
 
-    fun blockSelected(block: LeancherIntent.Block) {
-        when(block) {
-            is LeancherIntent.Block.Action.Getter.InputGetter -> Log.i("HOMEVIEWMODEL", "Input Getter")
-            is LeancherIntent.Block.Action.Getter.IntentGetter -> Log.i("HOMEVIEWMODEL", "Intent Getter")
-            is LeancherIntent.Block.Action.Setter.ReferenceSetter -> actions.executeIntent(values[block.reference.key] as Intent)
-            is LeancherIntent.Block.Action.Setter.IntentDefinitionSetter -> actions.executeIntent(createIntent(block.definition))
-            else -> { /* no side effect has to be executed */ }
-        }
+    private fun setInputResult(reference: Reference, value: Any) {
+        values[reference.key] = value
+        finishBlock()
+    }
 
-        stepIndex++
+    private fun showBlock(block: LeancherIntent.Block) {
         blocks += block
+    }
+
+    private fun finishBlock() {
+        stepIndex++
         nextBlockOptions = nextBlockOptions()
 
-//        model.store.saveState("greeting", "Hallo")
-//
-//        greeting = model.store.loadState("greeting") ?: "not found"
+        next()
+    }
 
+    private fun next() {
         when (nextBlockOptions.size) {
-            0 -> {
-                isFinished = true
+            0 -> isFinished = true
+            1 -> {
+                val block = nextBlockOptions[0]
+                showBlock(block)
+                execute(block)
             }
-            1 -> blockSelected(nextBlockOptions[0])
         }
+    }
+
+    private fun execute(block: LeancherIntent.Block) {
+        when(block) {
+            is LeancherIntent.Block.Action.Getter.IntentGetter -> {
+                Log.i("HOMEVIEWMODEL", "Intent Getter")
+                finishBlock()
+            }
+            is LeancherIntent.Block.Action.Setter.ReferenceSetter -> {
+                actions.executeIntent(values[block.reference.key] as Intent)
+                finishBlock()
+            }
+            is LeancherIntent.Block.Action.Setter.IntentDefinitionSetter -> {
+                actions.executeIntent(createIntent(block.definition))
+                finishBlock()
+            }
+            is LeancherIntent.Block.Message -> {
+                finishBlock()
+            }
+            else -> { /* no side effect has to be executed */ }
+        }
+//        finishBlock()
+    }
+
+    fun blockSelected(block: LeancherIntent.Block) {
+        showBlock(block)
+        finishBlock()
     }
 
     fun onStartOver() {

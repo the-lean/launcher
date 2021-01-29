@@ -13,8 +13,8 @@ import leancher.android.domain.intents.LeancherIntent.Block.Text
 val app = LeancherIntent(
     Text("start an app"),
     InputGetter(Reference("launchIntent"), InputRenderer("AppList")),
-//    ReferenceSetter(Reference("launchIntent"))
-    Message("i will be soon ready to launch something for you")
+    ReferenceSetter(Reference("launchIntent"))
+//    Message("i will be soon ready to launch something for you")
 )
 
 val alarm = LeancherIntent(

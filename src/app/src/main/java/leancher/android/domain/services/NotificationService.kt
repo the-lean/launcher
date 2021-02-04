@@ -73,7 +73,10 @@ class NotificationService : NotificationListenerService() {
                 icon = statusBarNotification.notification.smallIcon,
                 originalNotification = statusBarNotification
             )
-            notifications.add(notification)
+
+            if(notification.title != null && notification.text != null && !notifications.any { n -> n.key == notification.key }) {
+                notifications.add(notification)
+            }
         }
 
         sendResultOnUI(gson.toJson(notifications))

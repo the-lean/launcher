@@ -65,16 +65,18 @@ class NotificationService : NotificationListenerService() {
         var notifications = mutableListOf<leancher.android.domain.models.Notification>()
         this@NotificationService.activeNotifications.forEach { statusBarNotification ->
             val extras: Bundle = statusBarNotification.notification.extras
-            val notification = leancher.android.domain.models.Notification(
-                key = statusBarNotification.key,
-                packageName = statusBarNotification.packageName,
-                title = extras[Notification.EXTRA_TITLE].toString(),
-                text = extras[Notification.EXTRA_TEXT].toString(),
-                icon = statusBarNotification.notification.smallIcon,
-                originalNotification = statusBarNotification
-            )
+            if(extras[Notification.EXTRA_TITLE] != null
+                && extras[Notification.EXTRA_TEXT] != null
+                && !notifications.any { n -> n.key == statusBarNotification.key }) {
+                val notification = leancher.android.domain.models.Notification(
+                    key = statusBarNotification.key,
+                    packageName = statusBarNotification.packageName,
+                    title = extras[Notification.EXTRA_TITLE].toString(),
+                    text = extras[Notification.EXTRA_TEXT].toString(),
+                    icon = statusBarNotification.notification.smallIcon,
+                    originalNotification = statusBarNotification
+                )
 
-            if(notification.title != null && notification.text != null && !notifications.any { n -> n.key == notification.key }) {
                 notifications.add(notification)
             }
         }

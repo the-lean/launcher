@@ -25,8 +25,8 @@ fun TitleCard(pageTitle: PageTitle, actionButton: @Composable() (() -> Unit)?) {
                     contentScale = ContentScale.Crop)
 
             Column(modifier = Modifier.padding(10.dp)) {
-                Text(pageTitle.title, style = MaterialTheme.typography.h1)
-                Text(pageTitle.longText, style = MaterialTheme.typography.body1)
+                Text(pageTitle.title, style = MaterialTheme.typography.h2)
+                Text(pageTitle.longText, style = MaterialTheme.typography.subtitle1)
             }
 
             if(actionButton != null) {

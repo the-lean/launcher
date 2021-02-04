@@ -21,18 +21,35 @@ val LeancherTypography = Typography (
         h1 = TextStyle(
                 fontFamily = SegoeUI,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
+                fontSize = 40.sp,
                 color = White
         ),
+        h2 = TextStyle(
+                fontFamily = SegoeUI,
+                fontWeight = FontWeight.Bold,
+                fontSize = 25.sp,
+                color = White
+        ),
+        h5 = TextStyle(
+                fontFamily = SegoeUI,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Gray
+        ),
         subtitle1 = TextStyle(
-            fontFamily = SegoeUI,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = White
+                fontFamily = SegoeUI,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = White
         ),
         body1 = TextStyle(
                 fontFamily = SegoeUI,
                 fontSize = 15.sp,
-                color = White
+                color = Gray
+        ),
+        body2 = TextStyle(
+                fontFamily = SegoeUI,
+                fontSize = 12.sp,
+                color = Gray
         )
 )

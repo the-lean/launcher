@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.ui.tooling.preview.Preview
 import leancher.android.ui.theme.Gray
+import leancher.android.ui.theme.Orange
 import leancher.android.ui.theme.White
 
 @Composable
@@ -34,7 +35,7 @@ fun Paginator(pageAmount: Int, currentPage: Int) {
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier.padding(16.dp).fillMaxWidth()) {
         for(i in 0 until pageAmount) {
-            val color = if(i == currentPage) White else Gray
+            val color = if(i == currentPage) Orange else Gray
             PageIndicator(shape = CircleShape, color = color)
         }
     }

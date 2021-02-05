@@ -5,8 +5,6 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.ui.graphics.Color
 
-private val Blue200 = Color(0xff91a4fc)
-
 val White = Color.White
 val Gray = Color.DarkGray
 val Black = Color.Black

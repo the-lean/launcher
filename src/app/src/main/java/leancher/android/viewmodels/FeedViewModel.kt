@@ -7,8 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import leancher.android.domain.models.Notification
-
-data class Widget (val id: Int, val providerInfo: AppWidgetProviderInfo)
+import leancher.android.domain.models.Widget
 
 class FeedViewModel(widgets: List<Widget>, val actions: Actions): ViewModel() {
     var widgets: List<Widget> by mutableStateOf(widgets)

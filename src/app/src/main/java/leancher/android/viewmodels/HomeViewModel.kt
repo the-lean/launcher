@@ -18,11 +18,6 @@ import leancher.android.domain.intents.LeancherIntent.Block.Action.IntentDefinit
 import leancher.android.domain.intents.LeancherIntent.Block.Action.IntentDefinition.Value.Reference
 import java.io.Serializable
 
-fun List<LeancherIntent>.blocksFor(step: Int): List<LeancherIntent.Block> =
-    mapNotNull { intent -> intent.blocks.getOrNull(step, ) }
-fun List<LeancherIntent.Block>.ids(): List<BlockId> =
-    map(LeancherIntent.Block::id)
-
 class HomeModel(
     val store: IScopedStateStore
 ) {}
@@ -32,12 +27,13 @@ interface IScopedStateStore {
     fun <TState>loadState (key: String): TState?
 }
 
-class ViewModelFactory<TViewModel : ViewModel?>(private val getViewModel: () -> TViewModel) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T = getViewModel() as T
-}
-
 typealias InputRenderer = @Composable (setResult: (Any) -> Unit) -> Unit
 typealias OutputRenderer = @Composable () -> Unit
+
+fun List<LeancherIntent>.blocksFor(step: Int): List<LeancherIntent.Block> =
+    mapNotNull { intent -> intent.blocks.getOrNull(step, ) }
+fun List<LeancherIntent.Block>.ids(): List<BlockId> =
+    map(LeancherIntent.Block::id)
 
 class HomeViewModel(
     private val model: HomeModel,
@@ -115,7 +111,6 @@ class HomeViewModel(
             }
             else -> { /* no side effect has to be executed */ }
         }
-//        finishBlock()
     }
 
     fun blockSelected(block: LeancherIntent.Block) {

@@ -23,10 +23,10 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import leancher.android.R
+import leancher.android.domain.models.Widget
 import leancher.android.ui.components.ActionDialog
 import leancher.android.ui.components.IconButton
 import leancher.android.viewmodels.FeedViewModel
-import leancher.android.viewmodels.Widget
 
 
 @Composable
@@ -70,7 +70,6 @@ fun WidgetHostView(
     createWidgetHostView: (widget: Widget) -> AppWidgetHostView
 ) {
 
-    // TODO: show confirmation dialog before removing widget
     val context = AmbientContext.current
     val (showDialog, setShowDialog) = remember { mutableStateOf(false) }
     val (widgetToRemove, setWidgetToRemove) = remember { mutableStateOf<Widget?>(null) }

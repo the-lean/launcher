@@ -31,6 +31,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import leancher.android.domain.models.Notification
+import leancher.android.domain.models.Widget
 import leancher.android.domain.services.NotificationService.Companion.CLEAR_NOTIFICATIONS
 import leancher.android.domain.services.NotificationService.Companion.COMMAND_KEY
 import leancher.android.domain.services.NotificationService.Companion.DISMISS_NOTIFICATION
@@ -346,8 +347,6 @@ class MainActivity : AppCompatActivity() {
         val extras = data.extras
         val appWidgetId = extras!!.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
         val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
-        // val hostView = appWidgetHost.createView(this, appWidgetId, appWidgetInfo)
-        // hostView.setAppWidget(appWidgetId, appWidgetInfo)
 
         feedVM.addWidget(Widget(appWidgetId, appWidgetInfo))
     }

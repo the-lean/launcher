@@ -1,6 +1,5 @@
 package leancher.android.ui.layouts
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -10,12 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.AmbientAnimationClock
 import androidx.compose.ui.unit.dp
-import androidx.ui.res.imageResource
 import leancher.android.ui.components.Pager
 import leancher.android.ui.components.PagerCard
 import leancher.android.ui.components.PagerState
 import leancher.android.ui.components.Paginator
-import java.util.*
 
 data class Page (
     val name: String,

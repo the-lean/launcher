@@ -95,7 +95,9 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        hideStatusBar()
+        window.insetsController?.let { controller ->
+            controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+        }
     }
 
     private val homeModel = HomeModel(ScopedStateStore("home"))

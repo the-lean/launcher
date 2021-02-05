@@ -8,7 +8,8 @@ import androidx.compose.ui.graphics.Color
 private val Blue200 = Color(0xff91a4fc)
 
 val White = Color.White
-val Gray = Color.Gray
+val Gray = Color.DarkGray
+val Black = Color.Black
 val Orange = Color(rgb(224, 152, 36))
 
 val LightColors = lightColors(
@@ -23,7 +24,7 @@ val LightColors = lightColors(
         background = Color(rgb(0,120,215)),
         onBackground = Color(rgb(0,99,177)),
 
-        surface = Color(rgb(0,183,195)),
+        surface = White,
         onSurface = Color(rgb(3,131,135))
 
 )

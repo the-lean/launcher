@@ -13,6 +13,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -21,6 +23,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import leancher.android.R
+import leancher.android.ui.components.ActionDialog
 import leancher.android.ui.components.IconButton
 import leancher.android.viewmodels.FeedViewModel
 import leancher.android.viewmodels.Widget
@@ -68,14 +71,20 @@ fun WidgetHostView(
 ) {
 
     // TODO: show confirmation dialog before removing widget
-    //    val context = AmbientContext.current
-    //    val (showDialog, setShowDialog) = remember { mutableStateOf(show) }
-    //    ActionDialog(
-    //        title = context.getString(R.string.remove_widget_title), text = context.getString(R.string.remove_widget_text),
-    //        showDialog = showDialog, setShowDialog = setShowDialog,
-    //        confirmAction = { removeWidget(widget) },
-    //        dismissAction = {  },
-    //    )
+    val context = AmbientContext.current
+    val (showDialog, setShowDialog) = remember { mutableStateOf(false) }
+    val (widgetToRemove, setWidgetToRemove) = remember { mutableStateOf<Widget?>(null) }
+
+    ActionDialog(
+        title = context.getString(R.string.remove_widget_title), text = context.getString(R.string.remove_widget_text),
+        showDialog = showDialog, setShowDialog = setShowDialog,
+        confirmAction = {
+            if (widgetToRemove != null) {
+                removeWidget(widgetToRemove)
+            }
+        },
+        dismissAction = {  },
+    )
 
     ScrollableColumn {
         widgets.forEach { widget ->
@@ -86,7 +95,8 @@ fun WidgetHostView(
                         .clickable(
                             onClick = { },
                             onLongClick = {
-                                removeWidget(widget)
+                                setWidgetToRemove(widget)
+                                setShowDialog(true)
                             }), horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Column(Modifier.padding(horizontal = 15.dp)) {
@@ -94,10 +104,6 @@ fun WidgetHostView(
                             viewBlock = {
                                 createWidgetHostView(widget).apply {
                                     layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-                                    setOnLongClickListener {
-                                        removeWidget(widget)
-                                        true // <- set to true
-                                    }
                                 }
                             })
                     }

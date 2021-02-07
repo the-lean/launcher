@@ -1,77 +1,83 @@
 package leancher.android.domain.intents
 
-sealed class BlockId {
-    data class TextId(val text: String) : BlockId()
-    data class GetterId(val id: String, val reference: String) : BlockId()
-    data class SetterId(val id: String) : BlockId()
-    data class MessageId(val message: String) : BlockId()
+sealed class StepId {
+    data class TextId(val text: String) : StepId()
+    data class GetterId(val id: String, val reference: String) : StepId()
+    data class SetterId(val id: String) : StepId()
+    data class MessageId(val message: String) : StepId()
 }
 
-class LeancherIntent(val blocks: List<Block>) {
-    constructor(vararg blocks: Block) : this(blocks.asList())
+data class InputRenderer(val id: String)
+data class ResultRenderer(val id: String)
 
-    fun matches(ids: List<BlockId>) : Boolean =
-        (ids zip blocks.map { block -> block.id })
+class LeancherIntent(val blocks: List<Step>) {
+    constructor(vararg blocks: Step) : this(blocks.asList())
+
+    fun matches(ids: List<StepId>) : Boolean =
+        (ids zip blocks.map { step -> step.id })
             .fold(true) { acc, pair ->
                 acc && pair.run { first == second }
             }
 
-    sealed class Block {
-        abstract val id: BlockId
+    sealed class Step {
+        abstract val id: StepId
 
-        override fun equals(other: Any?): Boolean = other is Block && this.id == other.id
+        override fun equals(other: Any?): Boolean = other is Step && this.id == other.id
 
-        data class Text(val content: String) : Block() {
-            override val id = BlockId.TextId(content)
+        data class Text(val content: String) : Step() {
+            override val id = StepId.TextId(content)
         }
 
-        sealed class Action : Block() {
-            sealed class Getter : Action() {
-                data class InputGetter(val reference: IntentDefinition.Value.Reference, val renderer: InputRenderer) : Getter() {
-                    override val id = BlockId.GetterId(renderer.id, reference.key)
-                }
-                class IntentGetter(val definition: IntentDefinition, val reference: IntentDefinition.Value.Reference, val renderer: DataRenderer) : Getter() {
-                    override val id = BlockId.GetterId(definition.id, reference.key)
-                }
+        sealed class Getter(open val resultRenderer: ResultRenderer? = null) : Step() {
+            data class InputGetter(
+                val reference: Value.Reference,
+                val inputRenderer: InputRenderer,
+                override val resultRenderer: ResultRenderer? = null
+            ) : Getter(resultRenderer) {
+                override val id = StepId.GetterId(inputRenderer.id, reference.key)
             }
-
-            sealed class Setter : Action() {
-                data class ReferenceSetter(val reference: IntentDefinition.Value.Reference) : Setter() {
-                    override val id = BlockId.SetterId("ref:${reference.key}")
-                }
-                class IntentDefinitionSetter(val definition: IntentDefinition) : Setter() {
-                    override val id = BlockId.SetterId("intent:${definition.id}")
-                }
-            }
-
-            data class InputRenderer(val id: String)
-            data class DataRenderer(val id: String)
-
-            data class IntentDefinition(
-                val id: String,
-                val additional: Additional? = null,
-                val extras: List<Extra>? = null) {
-                data class Extra(val id: String, val value: Value)
-
-                sealed class ChooserDefinition {
-                    object NoChooser : ChooserDefinition()
-                    data class Chooser(val title: String) : ChooserDefinition()
-                }
-
-                sealed class Additional {
-                    data class Data(val content: Value) : Additional()
-                    data class Type(val content: Value) : Additional()
-                }
-
-                sealed class Value {
-                    data class Reference(val key: String) : Value()
-                    data class Constant(val value: Any) : Value()
-                }
+            data class IntentGetter(
+                val definition: IntentDefinition,
+                val reference: Value.Reference,
+                override val resultRenderer: ResultRenderer? = null
+            ) : Getter() {
+                override val id = StepId.GetterId(definition.id, reference.key)
             }
         }
 
-        data class Message(val content: String) : Block() {
-            override val id = BlockId.MessageId(content)
+        sealed class Action : Step() {
+            data class LaunchIntentByReference(val reference: Value.Reference) : Action() {
+                override val id = StepId.SetterId("ref:${reference.key}")
+            }
+            data class LaunchIntentByDefinition(val definition: IntentDefinition) : Action() {
+                override val id = StepId.SetterId("intent:${definition.id}")
+            }
+        }
+
+        data class Message(val content: String) : Step() {
+            override val id = StepId.MessageId(content)
+        }
+    }
+
+    sealed class Value {
+        data class Reference(val key: String) : Value()
+        data class Constant(val value: Any) : Value()
+    }
+
+    data class IntentDefinition(
+        val id: String,
+        val additional: Additional? = null,
+        val extras: List<Extra>? = null) {
+        data class Extra(val id: String, val value: Value)
+
+        sealed class ChooserDefinition {
+            object NoChooser : ChooserDefinition()
+            data class Chooser(val title: String) : ChooserDefinition()
+        }
+
+        sealed class Additional {
+            data class Data(val content: Value) : Additional()
+            data class Type(val content: Value) : Additional()
         }
     }
 }

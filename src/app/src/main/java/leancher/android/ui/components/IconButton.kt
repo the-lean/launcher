@@ -20,12 +20,12 @@ fun IconButton(icon: ImageVector, action: () -> Unit, text: String? = null) {
         Button(onClick = {
             action()
         }) {
-            Icon(icon, Modifier.preferredSize(20.dp), tint = White)
+            Icon(icon, text, Modifier.preferredSize(20.dp), tint = White)
             Spacer(modifier = Modifier.width(5.dp))
             Text(text = "$text")
         }
     } else {
-        Icon(icon, Modifier
+        Icon(icon, text, Modifier
                 .preferredSize(30.dp)
                 .clickable(onClick = { action() }), tint = White)
     }

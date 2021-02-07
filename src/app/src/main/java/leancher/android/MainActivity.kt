@@ -1,6 +1,7 @@
 package leancher.android
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
@@ -15,12 +16,20 @@ import android.provider.Settings
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -40,6 +49,7 @@ import leancher.android.ui.pages.NotificationCenter
 import leancher.android.ui.theme.LeancherTheme
 import leancher.android.viewmodels.*
 import java.lang.reflect.Type
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private val ACTION_NOTIFICATION_LISTENER_SETTINGS =
@@ -88,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val homeModel = HomeModel(ScopedStateStore("home"))
+//    private val homeModel = HomeModel(ScopedStateStore("home"))
 
     private val feedVM by viewModels<FeedViewModel> {
         ViewModelFactory {
@@ -104,7 +114,7 @@ class MainActivity : AppCompatActivity() {
     private val homeVM by viewModels<HomeViewModel> {
         ViewModelFactory {
             HomeViewModel(
-                model = homeModel,
+//                model = homeModel,
                 inputRenderers = mapOf(
                     "AppList" to { setResult -> ApplicationList(setResult) } // TODO: convert to reference, once possible
                 ),
@@ -123,7 +133,8 @@ class MainActivity : AppCompatActivity() {
                     clearNotifications = ::clearNotifications,
                     showStatusBar = ::showStatusBar,
                     hideStatusBar = ::hideStatusBar,
-                    dismissNotification = ::dismissNotification
+                    dismissNotification = ::dismissNotification,
+                    getNextAlarm = ::getNextAlarm
                 )
             )
         }
@@ -152,6 +163,11 @@ class MainActivity : AppCompatActivity() {
     private fun isIntentCallable(intent: Intent) =
         packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isNotEmpty() // TODO: check whether this flag is needed
 
+    private fun getNextAlarm(): Optional<Date> =
+        Optional
+            .ofNullable((getSystemService(ALARM_SERVICE) as AlarmManager).nextAlarmClock)
+            .map { alarm -> Date(alarm.triggerTime) }
+
     private fun test(){
 //        val editText = EditText(applicationContext)
 //        editText.focusable = View.FOCUSABLE
@@ -177,16 +193,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun ApplicationList(setResult: (Any) -> Unit) {
-        for (info in getApplicationsList()) {
-            val intent = packageManager.getLaunchIntentForPackage(info.applicationInfo.packageName)!!
-            Text(
-                modifier = Modifier.clickable(onClick = { setResult(intent) }),
-                text = info.label as String,
-                style = MaterialTheme.typography.body1
-            )
+    fun ApplicationList(setResult: (Any) -> Unit) =
+        Column(Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())) {
+            for (info in getApplicationsList()) {
+                val intent = packageManager.getLaunchIntentForPackage(info.applicationInfo.packageName)!!
+                Text(
+                    modifier = Modifier.clickable(onClick = { setResult(intent) }),
+                    text = info.label as String,
+                    style = MaterialTheme.typography.body1
+                )
+            }
         }
-    }
 
     override fun onStart() {
         super.onStart()

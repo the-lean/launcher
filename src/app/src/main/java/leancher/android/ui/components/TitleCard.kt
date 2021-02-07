@@ -21,6 +21,7 @@ fun TitleCard(pageTitle: PageTitle, actionButton: @Composable() (() -> Unit)?) {
             modifier = Modifier.padding(16.dp)) {
 
             Image(imageResource(id = pageTitle.imageResource),
+                "finally a Framework that thinks of a11y",
                     modifier = Modifier.preferredSize(50.dp, 50.dp),
                     contentScale = ContentScale.Crop)
 

@@ -50,7 +50,7 @@ fun IWanna(startOver: () -> Unit) =
     Text(
         modifier = Modifier.clickable { startOver() },
         text = "i wanna …",
-        style = MaterialTheme.typography.subtitle1
+        style = MaterialTheme.typography.body1
     )
 
 @Composable
@@ -78,7 +78,7 @@ fun NextBlock(
 
 @Composable
 fun Block(block: LeancherIntent.Block, renderers: HomeViewModel.Renderers) = when(block) {
-    is LeancherIntent.Block.Text -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
+    is LeancherIntent.Block.Text -> Text(text = block.content, style = MaterialTheme.typography.body1)
     is LeancherIntent.Block.Action.Getter.InputGetter -> (renderers.input[block.renderer.id]?.invoke(block.reference) ?: { Text("no renderer for ${block.renderer} specified") }).invoke()
     is LeancherIntent.Block.Action.Getter.IntentGetter -> (renderers.output[block.renderer.id] ?: {Text("no renderer for ${block.renderer} specified")}).invoke()
     is LeancherIntent.Block.Message -> Snackbar(text = { Text(text = block.content) })
@@ -94,7 +94,7 @@ fun NextBlockOption(
     is LeancherIntent.Block.Text -> Text(
         modifier = Modifier.clickable { blockSelected(block) },
         text = block.content,
-        style = MaterialTheme.typography.subtitle1
+        style = MaterialTheme.typography.body1
     )
     else -> { }
 }

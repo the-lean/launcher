@@ -31,10 +31,10 @@ fun NotificationItemTemplate(notification: Notification) {
             }
             Column(Modifier.padding(horizontal = 10.dp)) {
                 Row() {
-                    Text(text = notification.title, style = MaterialTheme.typography.subtitle1)
+                    Text(text = notification.title, style = MaterialTheme.typography.h5)
                 }
                 Row() {
-                    Text(text = notification.text, style = MaterialTheme.typography.body1)
+                    Text(text = notification.text, style = MaterialTheme.typography.body2)
                 }
             }
         }

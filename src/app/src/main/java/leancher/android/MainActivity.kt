@@ -9,12 +9,18 @@ import android.content.ComponentName
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -25,6 +31,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import leancher.android.domain.models.Notification
+import leancher.android.domain.models.Widget
 import leancher.android.domain.services.NotificationService.Companion.CLEAR_NOTIFICATIONS
 import leancher.android.domain.services.NotificationService.Companion.COMMAND_KEY
 import leancher.android.domain.services.NotificationService.Companion.DISMISS_NOTIFICATION
@@ -33,6 +40,7 @@ import leancher.android.domain.services.NotificationService.Companion.READ_COMMA
 import leancher.android.domain.services.NotificationService.Companion.RESULT_KEY
 import leancher.android.domain.services.NotificationService.Companion.RESULT_VALUE
 import leancher.android.domain.services.NotificationService.Companion.UPDATE_UI_ACTION
+import leancher.android.ui.layouts.Page
 import leancher.android.ui.layouts.Pager
 import leancher.android.ui.pages.Feed
 import leancher.android.ui.pages.Home
@@ -57,6 +65,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModelStateManager: ViewModelStateManager
 
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -78,13 +87,17 @@ class MainActivity : AppCompatActivity() {
                 content = {
                     Pager(
                         pages = listOf(
-                            { Feed(feedVM) },
-                            { Home(homeVM) },
-                            { NotificationCenter(notificationsVM) }
+                            Page("YOUR DAY ...",  { Feed(feedVM) }),
+                            Page("I WANNA ...",  { Home(homeVM) }),
+                            Page("YOUR NOTIFS ...",  { NotificationCenter(notificationsVM) })
                         )
                     )
                 }
             )
+        }
+
+        window.insetsController?.let { controller ->
+            controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
         }
     }
 
@@ -121,11 +134,25 @@ class MainActivity : AppCompatActivity() {
             NotificationCenterViewModel(
                 NotificationCenterViewModel.Actions(
                     clearNotifications = ::clearNotifications,
+                    dismissNotification = ::dismissNotification,
                     showStatusBar = ::showStatusBar,
-                    hideStatusBar = ::hideStatusBar,
-                    dismissNotification = ::dismissNotification
+                    hideStatusBar = ::hideStatusBar
                 )
             )
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun showStatusBar() {
+        window.insetsController?.let { controller ->
+            controller.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun hideStatusBar() {
+        window.insetsController?.let { controller ->
+            controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
         }
     }
 
@@ -269,7 +296,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isNotificationServiceEnabled(): Boolean {
         val allNames = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        if (allNames != null && allNames?.isNotEmpty()) {
+        if (allNames?.isNotEmpty() == true) {
             for (name in allNames.split(":").toTypedArray()) {
                 if (packageName == ComponentName.unflattenFromString(name)!!.packageName) {
                     return true
@@ -320,34 +347,8 @@ class MainActivity : AppCompatActivity() {
         val extras = data.extras
         val appWidgetId = extras!!.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
         val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
-        // val hostView = appWidgetHost.createView(this, appWidgetId, appWidgetInfo)
-        // hostView.setAppWidget(appWidgetId, appWidgetInfo)
 
         feedVM.addWidget(Widget(appWidgetId, appWidgetInfo))
-    }
-
-    private fun hideStatusBar() {
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                // Set the content to appear under the system bars so that the
-                // content doesn't resize when the system bars hide and show.
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).setInterruptionFilter(
-            NotificationManager.INTERRUPTION_FILTER_ALL
-        )
-    }
-
-    private fun showStatusBar() {
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).setInterruptionFilter(
-            NotificationManager.INTERRUPTION_FILTER_NONE
-        )
     }
 }
 

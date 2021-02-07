@@ -21,12 +21,13 @@ fun TitleCard(pageTitle: PageTitle, actionButton: @Composable() (() -> Unit)?) {
             modifier = Modifier.padding(16.dp)) {
 
             Image(imageResource(id = pageTitle.imageResource),
+                "finally a Framework that thinks of a11y",
                     modifier = Modifier.preferredSize(50.dp, 50.dp),
                     contentScale = ContentScale.Crop)
 
             Column(modifier = Modifier.padding(10.dp)) {
-                Text(pageTitle.title, style = MaterialTheme.typography.h1)
-                Text(pageTitle.longText, style = MaterialTheme.typography.body1)
+                Text(pageTitle.title, style = MaterialTheme.typography.h2)
+                Text(pageTitle.longText, style = MaterialTheme.typography.subtitle1)
             }
 
             if(actionButton != null) {

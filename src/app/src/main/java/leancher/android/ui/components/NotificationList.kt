@@ -43,6 +43,7 @@ fun NotificationList(notifications: List<Notification>) {
                         Column(verticalArrangement = Arrangement.Center) {
                             Image(
                                 imageResource(id = R.drawable.notification),
+                                "notification icon",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.preferredSize(20.dp, 20.dp)
                             )

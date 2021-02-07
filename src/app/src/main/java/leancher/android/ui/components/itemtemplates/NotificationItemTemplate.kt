@@ -25,16 +25,17 @@ fun NotificationItemTemplate(notification: Notification) {
             Column(verticalArrangement = Arrangement.Center) {
                 Image(
                     imageResource(id = R.drawable.notification),
+                    "",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.preferredSize(20.dp, 20.dp)
                 )
             }
             Column(Modifier.padding(horizontal = 10.dp)) {
                 Row() {
-                    Text(text = notification.title, style = MaterialTheme.typography.subtitle1)
+                    Text(text = notification.title, style = MaterialTheme.typography.h5)
                 }
                 Row() {
-                    Text(text = notification.text, style = MaterialTheme.typography.body1)
+                    Text(text = notification.text, style = MaterialTheme.typography.body2)
                 }
             }
         }

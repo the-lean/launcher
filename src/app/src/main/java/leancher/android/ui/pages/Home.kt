@@ -1,85 +1,142 @@
 package leancher.android.ui.pages
 
-import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Snackbar
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.savedinstancestate.savedInstanceState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import leancher.android.R
-import leancher.android.domain.models.PageTitle
-import leancher.android.ui.components.TitleCard
-import leancher.android.domain.intents.LeancherIntent
+import androidx.compose.ui.unit.sp
+import leancher.android.viewmodels.Block
+import leancher.android.viewmodels.CurrentBlock
 import leancher.android.viewmodels.HomeViewModel
-import androidx.compose.runtime.savedinstancestate.savedInstanceState
-import androidx.compose.ui.platform.AmbientContext
+
+val blockOffset = 40.dp
 
 @Composable
 fun Home(vm: HomeViewModel) {
-    val context = AmbientContext.current
-
-    val homeTitleModel = PageTitle(
-        context.getString(R.string.page_home),
-        context.getString(R.string.launcher_experience),
-        R.drawable.leancher
+    @Composable
+    fun Header() = Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "I WANNA…",
+        style = MaterialTheme.typography.h1.merge(
+            SpanStyle(
+                fontSize = 64.sp,
+                fontWeight = FontWeight.Black
+            )
+        )
     )
 
-    // TODO
-    var textValue by savedInstanceState { "1234567812345678" }
-
-    Row {
-        Column(Modifier.padding(10.dp)) {
-            TitleCard(pageTitle = homeTitleModel, null)
-        }
-    }
-
-    Column(Modifier.padding(10.dp)) {
-//        Text(text = vm.greeting)
-//        Text(text = "Step Index: ${vm.stepIndex}")
-        IWanna()
-        ScrollableColumn() {
-            Blocks(vm.blocks, vm.renderers)
-            NextBlock(vm.nextBlockOptions, vm::blockSelected, vm.renderers)
-            if(vm.isFinished) Button(onClick = vm::onStartOver) {
-                Text(text = "Start Over")
+    Column(Modifier.padding(0.dp)) {
+        Header()
+        Spacer(Modifier.height(16.dp))
+        if (vm.currentBlock == null)
+            InputRequester(vm::start)
+        else
+            Box(Modifier.fillMaxSize()) {
+                Blocks(vm.blocks)
+                CurrentBlock(vm.currentBlock!!, blockIndex = vm.blocks.size)
             }
+    }
+
+}
+
+
+@Composable
+fun BlockCard(blockIndex: Int, content: @Composable () -> Unit) =
+    Card(
+        elevation = 16.dp,
+        shape = RoundedCornerShape(topLeft = 24.dp, topRight = 24.dp),
+        backgroundColor = Color.LightGray,
+        contentColor = Color.Red,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = blockOffset.times(blockIndex))
+    ) {
+        Box(modifier = Modifier.padding(16.dp)) {
+            content()
+        }
+    }
+
+@Composable
+fun InputRequester(start: () -> Unit) = Box(modifier = Modifier
+    .fillMaxSize()
+    .clickable { start() }) {
+    Text(text = "click to begin")
+}
+
+@Composable
+fun CurrentBlock(currentBlock: CurrentBlock, blockIndex: Int) {
+    BlockCard(blockIndex) {
+        when (currentBlock) {
+            is CurrentBlock.Input -> currentBlock.renderer.invoke()
+            is CurrentBlock.Selection -> Selection(currentBlock)
         }
     }
 }
 
-
 @Composable
-fun IWanna() = Text("i wanna …", style = MaterialTheme.typography.subtitle1)
-
-@Composable
-fun Blocks(blocks: List<LeancherIntent.Block>, renderers: HomeViewModel.Renderers) =
-    Column(modifier = Modifier.padding(vertical = 5.dp)) { blocks.forEach { Block(it, renderers) } }
-
-@Composable
-fun NextBlock(
-    nextBlockOptions: List<LeancherIntent.Block>,
-    blockSelected: (LeancherIntent.Block) -> Unit,
-    renderers: HomeViewModel.Renderers
-) {
-//    val textState = remember { mutableStateOf(TextFieldValue()) }
-//    TextField(
-//        value = textState.value,
-//        onValueChange = { textState.value = it }
-//    )
-//    Text("Searching for: " + textState.value.text)
-    nextBlockOptions.forEach { block ->
-        Card(Modifier.clickable(onClick = { blockSelected(block) }).padding(vertical = 5.dp)) { Block(block, renderers) }
+fun Selection(currentBlock: CurrentBlock.Selection) {
+    Column {
+        var filter by savedInstanceState(saver = TextFieldValue.Saver) { TextFieldValue() }
+        BasicTextField(
+            value = filter,
+            onValueChange = { filter = it },
+            keyboardOptions = KeyboardOptions(
+                autoCorrect = false,
+                imeAction = ImeAction.Done // Go, Next, NoAction, None
+                // TODO: requesting focus: https://stackoverflow.com/questions/64947249/jetpack-compose-setting-imeaction-does-not-close-or-change-focus-for-the-keyboa
+            ),
+            decorationBox = {
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+//                    Text(text = filter.annotatedString)
+                    for (option in currentBlock.options)
+                        if (option.text.contains(filter.text))
+                            Text(
+                                text = option.text,
+                                modifier = Modifier.clickable { option.select() },
+                                style = MaterialTheme.typography.subtitle1
+                            )
+                }
+            }
+        )
     }
 }
 
+
 @Composable
-fun Block(block: LeancherIntent.Block, renderers: HomeViewModel.Renderers) = when(block) {
-    is LeancherIntent.Block.Text -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
-    is LeancherIntent.Block.Action.Getter.InputGetter -> (renderers.input[block.renderer.id]?.invoke(block.reference) ?: { Text("no renderer for ${block.renderer} specified") }).invoke()
-    is LeancherIntent.Block.Action.Getter.IntentGetter -> TODO("render result")
-    is LeancherIntent.Block.Action.Setter.ReferenceSetter -> { }
-    is LeancherIntent.Block.Action.Setter.IntentDefinitionSetter -> { }
-    is LeancherIntent.Block.Message -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
+fun Blocks(blocks: List<Block>) =
+    blocks.withIndex().forEach { (index, block) ->
+        BlockCard(blockIndex = index) {
+            FinishedBlock(block)
+        }
+    }
+
+
+@Composable
+fun FinishedBlock(block: Block) = when (block) {
+    is Block.Text -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
+    is Block.Result -> block.renderer.invoke()
+    is Block.Message -> Snackbar(text = { Text(text = block.content) })
+    else -> { /* nothing to render */ }
 }

@@ -36,35 +36,18 @@ sealed class CurrentBlock {
 typealias InputRenderer = @Composable (setResult: (Any) -> Unit) -> Unit
 typealias OutputRenderer = @Composable () -> Unit
 
+@Composable
+fun NoRendererDefined() = Text("No Renderer defined")
+
 class HomeViewModel(
     inputRenderers: Map<String, InputRenderer>,
     outputRenderers: Map<String, OutputRenderer>,
     private val actions: Actions
 ) : ViewModel() {
-    //region TODO: Internals to be refactored to somewhere
-
-    class Renderers(
-        val input: Map<String, (LeancherIntent.Value.Reference, (() -> Unit)?) -> (@Composable () -> Unit)>,
-        val output: Map<String, @Composable () -> Unit>
-    )
-
-    private val renderers = Renderers(
-        inputRenderers.mapValues { (_, renderFunction) ->
-            { reference, action ->
-                {
-                    renderFunction { value ->
-                        values.set(reference, value)
-                        action?.invoke()
-                    }
-                }
-            }
-        },
-        outputRenderers
-    )
-
-    @Composable
-    fun NoRendererDefined() = Text("No Renderer defined")
-    //endregion
+    private val renderers = object {
+        val input = inputRenderers
+        val output = outputRenderers
+    }
 
     private val intents = leancher.android.domain.intents.intents
 
@@ -83,18 +66,24 @@ class HomeViewModel(
             )
         }
 
-    private fun addBlock(block: Block) {
-        blocks = blocks + block
+    private fun advanceWith(block: Block) {
+        blocks = blocks + block // add the block to the already finished blocks
+        advance()
     }
 
-    private fun addBlock(step: LeancherIntent.Step.Text) = addBlock(Block.Text(step))
-    private fun addBlock(step: LeancherIntent.Step.Getter) = addBlock(Block.Result(
-        step,
-        renderers.output[step.resultRenderer?.id] ?: { NoRendererDefined() }
-    ))
-
-    private fun addBlock(step: LeancherIntent.Step.Action) = addBlock(Block.Action(step))
-    private fun addBlock(step: LeancherIntent.Step.Message) = addBlock(Block.Message(step))
+    private fun finish(step: LeancherIntent.Step.Text) {
+        clearCurrentBlock()
+        advanceWith(Block.Text(step))
+    }
+    private fun finish(step: LeancherIntent.Step.Getter) {
+        clearCurrentBlock()
+        advanceWith(Block.Result(
+            step,
+            renderers.output[step.resultRenderer?.id] ?: { NoRendererDefined() }
+        ))
+    }
+    private fun finish(step: LeancherIntent.Step.Action) = advanceWith(Block.Action(step))
+    private fun finish(step: LeancherIntent.Step.Message) = advanceWith(Block.Message(step))
 
     fun start() = advance()
 
@@ -110,10 +99,13 @@ class HomeViewModel(
 
     private fun doStep(step: LeancherIntent.Step) = when (step) {
         is LeancherIntent.Step.Getter.InputGetter -> currentBlock = CurrentBlock.Input(
-            renderers.input[step.inputRenderer.id]?.invoke(step.reference) {
-                clearCurrentBlock()
-                addBlock(step)
-                advance()
+            renderers.input[step.inputRenderer.id]?.let { renderer ->
+                {
+                    renderer.invoke { result ->
+                        values.set(step.reference, result)
+                        finish(step)
+                    }
+                }
             } ?: { NoRendererDefined() })
         is LeancherIntent.Step.Getter.IntentGetter -> actions.executeIntentForResult(
             createIntent(
@@ -121,24 +113,17 @@ class HomeViewModel(
             )
         ) { result ->
             values.set(step.reference, result)
-            clearCurrentBlock()
-            addBlock(step)
-            advance()
+            finish(step)
         }
         is LeancherIntent.Step.Action.LaunchIntentByReference -> {
             actions.executeIntent(values.get<Intent>(step.reference)!!)
-            addBlock(step)
-            advance()
+            finish(step)
         }
         is LeancherIntent.Step.Action.LaunchIntentByDefinition -> {
             actions.executeIntent(createIntent(step.definition))
-            addBlock(step)
-            advance()
+            finish(step)
         }
-        is LeancherIntent.Step.Message -> {
-            addBlock(step)
-            advance()
-        }
+        is LeancherIntent.Step.Message -> finish(step)
         else -> throw Exception("maybe try exhaustive switches ;)")
     }
 
@@ -148,20 +133,12 @@ class HomeViewModel(
                 .filter { intent -> intent.matches(stepIds) }
                 .mapNotNull { intent -> intent.blocks.elementAtOrNull(stepIndex) }
                 .filterIsInstance<LeancherIntent.Step.Text>()
-                .map { step ->
-                    SelectionOption(step.content) {
-                        clearCurrentBlock()
-                        addBlock(step)
-                        advance()
-                    }
-                })
+                .map { step -> SelectionOption(step.content) { finish(step) } })
     }
 
     private fun advance() {
-        // region behavioral bindings
         fun isIntentFinished() = matchingIntents.size == 1 && nextSteps.isEmpty()
         fun isSelectionNeeded() = nextSteps.size > 1
-        // endregion
         when {
             isIntentFinished() -> startOver()
             isSelectionNeeded() -> createSelection()

@@ -118,7 +118,6 @@ class MainActivity : ComponentActivity() {
     private val homeVM by viewModels<HomeViewModel> {
         ViewModelFactory {
             HomeViewModel(
-//                model = homeModel,
                 inputRenderers = mapOf(
                     "AppList" to { setResult -> ApplicationList(setResult) } // TODO: convert to reference, once possible
                 ),

@@ -138,6 +138,5 @@ fun FinishedBlock(block: Block) = when (block) {
     is Block.Text -> Text(text = block.content, style = MaterialTheme.typography.subtitle1)
     is Block.Result -> block.renderer.invoke()
     is Block.Message -> Snackbar(text = { Text(text = block.content) })
-    else -> {
-    }
+    else -> { /* nothing to render */ }
 }

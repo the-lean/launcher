@@ -15,16 +15,16 @@ class NotificationCenterViewModel(
         internal set
 
     fun clearNotifications() = actions.clearNotifications()
+    fun dismissNotification(notification: Notification) = actions.dismissNotification(notification)
     fun showStatusBar() = actions.showStatusBar()
     fun hideStatusBar() = actions.hideStatusBar()
-    fun dismissNotification(notification: Notification) = actions.dismissNotification(notification)
     fun getNextAlarm() = actions.getNextAlarm()
 
     data class Actions(
         val clearNotifications: () -> Unit,
+        val dismissNotification: (notification: Notification) -> Unit,
         val showStatusBar: () -> Unit,
         val hideStatusBar: () -> Unit,
-        val dismissNotification: (notification: Notification) -> Unit,
         val getNextAlarm: () -> Optional<Date>
     )
 }

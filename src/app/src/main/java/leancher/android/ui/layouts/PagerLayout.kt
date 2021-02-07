@@ -1,8 +1,8 @@
 package leancher.android.ui.layouts
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -10,13 +10,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.AmbientAnimationClock
 import androidx.compose.ui.unit.dp
 import leancher.android.ui.components.Pager
+import leancher.android.ui.components.PagerCard
 import leancher.android.ui.components.PagerState
 import leancher.android.ui.components.Paginator
-import java.util.*
+
+data class Page (
+    val name: String,
+    val component: @Composable() () -> Unit
+)
 
 @Composable
 fun Pager(
-    pages: List<@Composable() () -> Unit>
+    pages: List<Page>
 ) {
     val clock = AmbientAnimationClock.current
     val pagerState = remember(clock) { PagerState(clock, 1, 0, 2) }
@@ -31,10 +36,18 @@ fun Pager(
         Row(
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colors.background)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.Bottom
         ) {
-            Column { pages.getOrNull(page)?.invoke() }
+            Column(Modifier.padding(top = 50.dp)) {
+                Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.Start) {
+                    Text(text = pages.getOrNull(page)?.name.toString(), style = MaterialTheme.typography.h1)
+                }
+
+                Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.Center) {
+                    PagerCard { Column { pages.getOrNull(page)?.component?.invoke() } }
+                }
+            }
         }
     }
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.Bottom) {

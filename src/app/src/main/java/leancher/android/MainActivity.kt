@@ -1,6 +1,8 @@
 package leancher.android
 
 import android.Manifest
+import android.app.Activity
+import android.app.AlarmManager
 import android.app.NotificationManager
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
@@ -15,11 +17,20 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.material.MaterialTheme
@@ -27,6 +38,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -48,8 +62,9 @@ import leancher.android.ui.pages.NotificationCenter
 import leancher.android.ui.theme.LeancherTheme
 import leancher.android.viewmodels.*
 import java.lang.reflect.Type
+import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     private val ACTION_NOTIFICATION_LISTENER_SETTINGS =
         "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"
 
@@ -101,7 +116,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val homeModel = HomeModel(ScopedStateStore("home"))
+//    private val homeModel = HomeModel(ScopedStateStore("home"))
 
     private val feedVM by viewModels<FeedViewModel> {
         ViewModelFactory {
@@ -117,13 +132,13 @@ class MainActivity : AppCompatActivity() {
     private val homeVM by viewModels<HomeViewModel> {
         ViewModelFactory {
             HomeViewModel(
-                model = homeModel,
                 inputRenderers = mapOf(
                     "AppList" to { setResult -> ApplicationList(setResult) } // TODO: convert to reference, once possible
                 ),
                 outputRenderers = mapOf(),
                 HomeViewModel.Actions(
                     executeIntent = ::startActivity,
+                    executeIntentForResult = ::startForResult,
                     isIntentCallable = ::isIntentCallable
                 )
             )
@@ -136,11 +151,20 @@ class MainActivity : AppCompatActivity() {
                     clearNotifications = ::clearNotifications,
                     dismissNotification = ::dismissNotification,
                     showStatusBar = ::showStatusBar,
-                    hideStatusBar = ::hideStatusBar
+                    hideStatusBar = ::hideStatusBar,
+                    getNextAlarm = ::getNextAlarm
                 )
             )
         }
     }
+
+    private fun startForResult(intent: Intent, setResult: (Intent) -> Unit) =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null)
+                setResult(result.data!!)
+            else
+                TODO("handle failure case")
+        }.launch(intent)
 
     @RequiresApi(Build.VERSION_CODES.R)
     private fun showStatusBar() {
@@ -179,24 +203,10 @@ class MainActivity : AppCompatActivity() {
     private fun isIntentCallable(intent: Intent) =
         packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isNotEmpty() // TODO: check whether this flag is needed
 
-    private fun test(){
-//        val editText = EditText(applicationContext)
-//        editText.focusable = View.FOCUSABLE
-//
-//        editText.addTextChangedListener(object : TextWatcher {
-//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-//            override fun afterTextChanged(s: Editable?) {}
-//
-//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                println(editText.text)
-//            }
-//        })
-//
-//        val inputMethodManager: InputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-//        inputMethodManager.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
-
-
-    }
+    private fun getNextAlarm(): Optional<Date> =
+        Optional
+            .ofNullable((getSystemService(ALARM_SERVICE) as AlarmManager).nextAlarmClock)
+            .map { alarm -> Date(alarm.triggerTime) }
 
     private fun getApplicationsList(): List<LauncherActivityInfo> {
         val launcherApps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -204,16 +214,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun ApplicationList(setResult: (Any) -> Unit) {
-        for (info in getApplicationsList()) {
-            val intent = packageManager.getLaunchIntentForPackage(info.applicationInfo.packageName)!!
-            Text(
-                modifier = Modifier.clickable(onClick = { setResult(intent) }),
-                text = info.label as String,
-                style = MaterialTheme.typography.body1
-            )
+    fun ApplicationList(setResult: (Any) -> Unit) =
+        Column(Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())) {
+            for (info in getApplicationsList()) {
+                val intent = packageManager.getLaunchIntentForPackage(info.applicationInfo.packageName)!!
+                Text(
+                    modifier = Modifier.clickable(onClick = { setResult(intent) }),
+                    text = info.label as String,
+                    style = MaterialTheme.typography.body1
+                )
+            }
         }
-    }
 
     override fun onStart() {
         super.onStart()

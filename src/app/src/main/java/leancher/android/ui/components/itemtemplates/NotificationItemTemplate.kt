@@ -25,6 +25,7 @@ fun NotificationItemTemplate(notification: Notification) {
             Column(verticalArrangement = Arrangement.Center) {
                 Image(
                     imageResource(id = R.drawable.notification),
+                    "",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.preferredSize(20.dp, 20.dp)
                 )

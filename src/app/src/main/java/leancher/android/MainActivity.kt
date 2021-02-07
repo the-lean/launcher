@@ -1,6 +1,7 @@
 package leancher.android
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.appwidget.AppWidgetHost
@@ -14,6 +15,9 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.*
@@ -51,7 +55,7 @@ import leancher.android.viewmodels.*
 import java.lang.reflect.Type
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     private val ACTION_NOTIFICATION_LISTENER_SETTINGS =
         "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"
 
@@ -121,6 +125,7 @@ class MainActivity : AppCompatActivity() {
                 outputRenderers = mapOf(),
                 HomeViewModel.Actions(
                     executeIntent = ::startActivity,
+                    executeIntentForResult = ::startForResult,
                     isIntentCallable = ::isIntentCallable
                 )
             )
@@ -139,6 +144,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
+
+    private fun startForResult(intent: Intent, setResult: (Intent) -> Unit) =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null)
+                setResult(result.data!!)
+            else
+                TODO("handle failure case")
+        }.launch(intent)
 
     private fun createWidgetHostView(widget: Widget) =
         appWidgetHost.createView(applicationContext, widget.id, widget.providerInfo)

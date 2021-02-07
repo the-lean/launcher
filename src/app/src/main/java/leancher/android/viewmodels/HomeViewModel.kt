@@ -16,15 +16,18 @@ sealed class Block(internal open val step: LeancherIntent.Step) {
     data class Text(override val step: LeancherIntent.Step.Text) : Block(step) {
         val content = step.content
     }
+
     data class Result(
         override val step: LeancherIntent.Step.Getter,
         val renderer: @Composable () -> Unit
     ) : Block(step)
+
     data class Action(override val step: LeancherIntent.Step.Action) : Block(step)
     data class Message(override val step: LeancherIntent.Step.Message) : Block(step) {
         val content = step.content
     }
 }
+
 sealed class CurrentBlock {
     data class Input(val renderer: @Composable () -> Unit) : CurrentBlock()
     data class Selection(val options: List<SelectionOption>) : CurrentBlock()
@@ -50,7 +53,7 @@ class HomeViewModel(
             { reference, action ->
                 {
                     renderFunction { value ->
-                        values[reference.key] = value
+                        values.set(reference, value)
                         action?.invoke()
                     }
                 }
@@ -63,8 +66,6 @@ class HomeViewModel(
     fun NoRendererDefined() = Text("No Renderer defined")
     //endregion
 
-    private val values: MutableMap<String, Any> = mutableMapOf()
-
     private val intents = leancher.android.domain.intents.intents
 
     var blocks: List<Block> by mutableStateOf(listOf())
@@ -75,20 +76,30 @@ class HomeViewModel(
     private val stepIndex get() = steps.size
     private val stepIds get() = steps.map { step -> step.id }
     private val matchingIntents get() = intents.filter { intent -> intent.matches(stepIds) }
-    private val nextSteps get() = matchingIntents.mapNotNull { intent -> intent.blocks.getOrNull(stepIndex) }
+    private val nextSteps
+        get() = matchingIntents.mapNotNull { intent ->
+            intent.blocks.getOrNull(
+                stepIndex
+            )
+        }
 
-    private fun addBlock(block: Block) { blocks = blocks + block }
+    private fun addBlock(block: Block) {
+        blocks = blocks + block
+    }
+
     private fun addBlock(step: LeancherIntent.Step.Text) = addBlock(Block.Text(step))
     private fun addBlock(step: LeancherIntent.Step.Getter) = addBlock(Block.Result(
         step,
         renderers.output[step.resultRenderer?.id] ?: { NoRendererDefined() }
     ))
+
     private fun addBlock(step: LeancherIntent.Step.Action) = addBlock(Block.Action(step))
     private fun addBlock(step: LeancherIntent.Step.Message) = addBlock(Block.Message(step))
 
     fun start() = advance()
 
     private fun startOver() {
+        values.reset()
         blocks = listOf()
         clearCurrentBlock()
     }
@@ -97,45 +108,53 @@ class HomeViewModel(
         currentBlock = null
     }
 
-    private fun doStep(step: LeancherIntent.Step) {
-        when(step) {
-            is LeancherIntent.Step.Getter.InputGetter -> currentBlock = CurrentBlock.Input(
-                renderers.input[step.inputRenderer.id]?.invoke(step.reference) {
-                    clearCurrentBlock()
-                    addBlock(step)
-                    advance()
-                } ?: { NoRendererDefined() })
-            is LeancherIntent.Step.Getter.IntentGetter -> {
-                TODO()
-            }
-            is LeancherIntent.Step.Action.LaunchIntentByReference -> {
-                actions.executeIntent(values[step.reference.key] as Intent)
+    private fun doStep(step: LeancherIntent.Step) = when (step) {
+        is LeancherIntent.Step.Getter.InputGetter -> currentBlock = CurrentBlock.Input(
+            renderers.input[step.inputRenderer.id]?.invoke(step.reference) {
+                clearCurrentBlock()
                 addBlock(step)
                 advance()
-            }
-            is LeancherIntent.Step.Action.LaunchIntentByDefinition -> {
-                actions.executeIntent(createIntent(step.definition))
-                addBlock(step)
-                advance()
-            }
-            is LeancherIntent.Step.Message -> {
-                addBlock(step)
-                advance()
-            }
-            else -> throw Exception("maybe try exhaustive switches ;)")
+            } ?: { NoRendererDefined() })
+        is LeancherIntent.Step.Getter.IntentGetter -> actions.executeIntentForResult(
+            createIntent(
+                step.definition
+            )
+        ) { result ->
+            values.set(step.reference, result)
+            clearCurrentBlock()
+            addBlock(step)
+            advance()
         }
+        is LeancherIntent.Step.Action.LaunchIntentByReference -> {
+            actions.executeIntent(values.get<Intent>(step.reference)!!)
+            addBlock(step)
+            advance()
+        }
+        is LeancherIntent.Step.Action.LaunchIntentByDefinition -> {
+            actions.executeIntent(createIntent(step.definition))
+            addBlock(step)
+            advance()
+        }
+        is LeancherIntent.Step.Message -> {
+            addBlock(step)
+            advance()
+        }
+        else -> throw Exception("maybe try exhaustive switches ;)")
     }
+
     private fun createSelection() {
         currentBlock = CurrentBlock.Selection(
             intents
                 .filter { intent -> intent.matches(stepIds) }
                 .mapNotNull { intent -> intent.blocks.elementAtOrNull(stepIndex) }
                 .filterIsInstance<LeancherIntent.Step.Text>()
-                .map { step -> SelectionOption(step.content) {
-                    clearCurrentBlock()
-                    addBlock(step)
-                    advance()
-                }})
+                .map { step ->
+                    SelectionOption(step.content) {
+                        clearCurrentBlock()
+                        addBlock(step)
+                        advance()
+                    }
+                })
     }
 
     private fun advance() {
@@ -150,37 +169,41 @@ class HomeViewModel(
         }
     }
 
+    private val values = object {
+        private val values: MutableMap<String, Any> = mutableMapOf()
+        fun set(reference: LeancherIntent.Value.Reference, value: Any) {
+            values[reference.key] = value
+        }
 
-    private fun <T> resolveValue(registry: Map<String, Any>, value: LeancherIntent.Value): T? =
-        when (value) {
-            is LeancherIntent.Value.Reference -> registry[value.key]
-            is LeancherIntent.Value.Constant -> value.value
-        } as T?
+        fun <T> get(value: LeancherIntent.Value): T? =
+            when (value) {
+                is LeancherIntent.Value.Reference -> values[value.key]
+                is LeancherIntent.Value.Constant -> value.value
+            } as T?
+
+        fun reset() = values.clear()
+    }
 
     private fun createIntent(definition: LeancherIntent.IntentDefinition): Intent =
         Intent(definition.id).apply {
             when (definition.additional) {
-                is LeancherIntent.IntentDefinition.Additional.Data -> setDataAndNormalize(
-                    Uri.parse(
-                        resolveValue(
-                            values,
-                            definition.additional.content
-                        )
-                    )
-                )
-                is LeancherIntent.IntentDefinition.Additional.Type -> setTypeAndNormalize(resolveValue(values, definition.additional.content))
+                is LeancherIntent.IntentDefinition.Additional.Data ->
+                    setDataAndNormalize(Uri.parse(values.get(definition.additional.content)))
+                is LeancherIntent.IntentDefinition.Additional.Type ->
+                    setTypeAndNormalize(values.get(definition.additional.content))
             }
 
             definition.extras?.forEach { definition ->
                 putExtra(
                     definition.id,
-                    resolveValue<Serializable>(values, definition.value)
+                    values.get<Serializable>(definition.value)
                 )
             }
         }
 
     data class Actions(
         val executeIntent: (Intent) -> Unit,
+        val executeIntentForResult: ((Intent, ((Intent) -> Unit)) -> Unit),
         val isIntentCallable: (Intent) -> Boolean
     )
 }

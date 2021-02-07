@@ -40,15 +40,10 @@ typealias OutputRenderer = @Composable () -> Unit
 fun NoRendererDefined() = Text("No Renderer defined")
 
 class HomeViewModel(
-    inputRenderers: Map<String, InputRenderer>,
-    outputRenderers: Map<String, OutputRenderer>,
+    private val inputRenderers: Map<String, InputRenderer>,
+    private val outputRenderers: Map<String, OutputRenderer>,
     private val actions: Actions
 ) : ViewModel() {
-    private val renderers = object {
-        val input = inputRenderers
-        val output = outputRenderers
-    }
-
     private val intents = leancher.android.domain.intents.intents
 
     var blocks: List<Block> by mutableStateOf(listOf())
@@ -79,7 +74,7 @@ class HomeViewModel(
         clearCurrentBlock()
         advanceWith(Block.Result(
             step,
-            renderers.output[step.resultRenderer?.id] ?: { NoRendererDefined() }
+            outputRenderers[step.resultRenderer?.id] ?: { NoRendererDefined() }
         ))
     }
     private fun finish(step: LeancherIntent.Step.Action) = advanceWith(Block.Action(step))
@@ -99,7 +94,7 @@ class HomeViewModel(
 
     private fun doStep(step: LeancherIntent.Step) = when (step) {
         is LeancherIntent.Step.Getter.InputGetter -> currentBlock = CurrentBlock.Input(
-            renderers.input[step.inputRenderer.id]?.let { renderer ->
+            inputRenderers[step.inputRenderer.id]?.let { renderer ->
                 {
                     renderer.invoke { result ->
                         values.set(step.reference, result)

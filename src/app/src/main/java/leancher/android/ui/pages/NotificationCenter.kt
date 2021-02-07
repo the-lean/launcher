@@ -32,6 +32,7 @@ fun NotificationCenter(vm: NotificationCenterViewModel) {
         Column {
             Image(
                 imageResource(R.drawable.notification),
+                "notification drawable",
                 modifier = Modifier.preferredSize(35.dp, 35.dp),
                 contentScale = ContentScale.Crop)
         }

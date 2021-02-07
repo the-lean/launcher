@@ -37,6 +37,7 @@ fun Feed(vm: FeedViewModel) {
         Column {
             Image(
                 imageResource(R.drawable.home),
+                "Home Drawable",
                 modifier = Modifier.preferredSize(35.dp, 35.dp),
                 contentScale = ContentScale.Crop)
         }
